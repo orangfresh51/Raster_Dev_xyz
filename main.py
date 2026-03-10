@@ -1600,3 +1600,76 @@ def cmd_config_set_contract(config: Raster_Dev_xyzConfig, args: argparse.Namespa
     addr = getattr(args, "contract_address", None) or getattr(args, "address", None)
     if not addr:
         print("Missing --contract or address", file=sys.stderr)
+        return 1
+    if not Raster_Dev_xyzValidation.is_valid_address(addr):
+        print("Invalid address", file=sys.stderr)
+        return 1
+    config_set_contract(path, addr)
+    print("Contract address updated.")
+    return 0
+
+
+def cmd_validate_address(config: Raster_Dev_xyzConfig, args: argparse.Namespace) -> int:
+    addr = getattr(args, "address", None)
+    if not addr:
+        print("Usage: raster_dev_xyz validate-address <0x...>", file=sys.stderr)
+        return 1
+    if Raster_Dev_xyzValidation.is_valid_address(addr):
+        print("Valid address.")
+        try:
+            print("EIP-55:", to_checksum_address(addr))
+        except Exception as e:
+            print("Checksum error:", e, file=sys.stderr)
+        return 0
+    print("Invalid address.", file=sys.stderr)
+    return 1
+
+
+def cmd_compute_deadline(config: Raster_Dev_xyzConfig, args: argparse.Namespace) -> int:
+    minutes = getattr(args, "minutes", 30)
+    ts = Raster_Dev_xyzTime.deadline_from_now_min(minutes)
+    print(ts)
+    return 0
+
+
+def cmd_compute_slippage_min(config: Raster_Dev_xyzConfig, args: argparse.Namespace) -> int:
+    amount_out = getattr(args, "amount_out", 0)
+    slippage_bps = getattr(args, "slippage_bps", RASTER_DEV_XYZ_DEFAULT_SLIPPAGE_BPS)
+    if amount_out < 0 or slippage_bps < 0 or slippage_bps > RASTER_DEV_XYZ_BPS_BASE:
+        print("Invalid amount or slippage_bps", file=sys.stderr)
+        return 1
+    min_out = Raster_Dev_xyzMath.slippage_min_out(amount_out, slippage_bps)
+    print(min_out)
+    return 0
+
+
+def cmd_ether_to_wei(config: Raster_Dev_xyzConfig, args: argparse.Namespace) -> int:
+    eth = getattr(args, "eth", 0.0)
+    print(ether_to_wei(eth))
+    return 0
+
+
+def cmd_wei_to_ether(config: Raster_Dev_xyzConfig, args: argparse.Namespace) -> int:
+    wei = getattr(args, "wei", 0)
+    print(wei_to_ether(wei))
+    return 0
+
+
+def get_abi() -> List[Dict[str, Any]]:
+    """Return the WomblePulse contract ABI used by Raster_Dev_xyz (for external tooling)."""
+    return list(ANNA_ABI)
+
+
+def get_default_rpc_for_chain(chain_id: int) -> str:
+    """Return a default public RPC URL for the given chain ID."""
+    if chain_id == RASTER_DEV_XYZ_CHAIN_ID_MAINNET:
+        return "https://eth.llamarpc.com"
+    if chain_id == RASTER_DEV_XYZ_CHAIN_ID_SEPOLIA:
+        return "https://rpc.sepolia.org"
+    if chain_id == RASTER_DEV_XYZ_CHAIN_ID_BASE:
+        return "https://mainnet.base.org"
+    return RASTER_DEV_XYZ_DEFAULT_RPC
+
+
+if __name__ == "__main__":
+    sys.exit(main())
