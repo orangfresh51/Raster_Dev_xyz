@@ -1333,3 +1333,92 @@ def batch_query_strategies(contract_address: str, rpc_url: str, strategy_ids: Li
     for sid in strategy_ids:
         result[sid] = client.get_strategy(sid)
     return result
+
+
+def batch_query_rounds(contract_address: str, rpc_url: str, round_ids: List[int]) -> Dict[int, Optional[Dict[str, Any]]]:
+    cfg = Raster_Dev_xyzConfig(rpc_url=rpc_url, contract_address=contract_address)
+    client = Raster_Dev_xyzContractClient(cfg)
+    result: Dict[int, Optional[Dict[str, Any]]] = {}
+    if not client.connect():
+        for rid in round_ids:
+            result[rid] = None
+        return result
+    for rid in round_ids:
+        result[rid] = client.get_round(rid)
+    return result
+
+
+def config_set_rpc(config_path: str, rpc_url: str) -> None:
+    cfg = Raster_Dev_xyzConfig.load(config_path)
+    cfg.rpc_url = rpc_url
+    cfg.save(config_path)
+
+
+def config_set_contract(config_path: str, contract_address: str) -> None:
+    cfg = Raster_Dev_xyzConfig.load(config_path)
+    cfg.contract_address = contract_address
+    cfg.save(config_path)
+
+
+def config_set_chain_id(config_path: str, chain_id: int) -> None:
+    cfg = Raster_Dev_xyzConfig.load(config_path)
+    cfg.chain_id = chain_id
+    cfg.save(config_path)
+
+
+def config_set_private_key(config_path: str, private_key: str) -> None:
+    cfg = Raster_Dev_xyzConfig.load(config_path)
+    cfg.private_key = private_key
+    cfg.save(config_path)
+
+
+def config_get_all(config_path: Optional[str] = None) -> Dict[str, Any]:
+    cfg = Raster_Dev_xyzConfig.load(config_path)
+    d = cfg.to_dict()
+    if cfg.private_key:
+        d["private_key"] = "[REDACTED]"
+    return d
+
+
+def ensure_config_dir() -> str:
+    Path(RASTER_DEV_XYZ_CONFIG_DIR).mkdir(parents=True, exist_ok=True)
+    return RASTER_DEV_XYZ_CONFIG_DIR
+
+
+def default_config_path() -> str:
+    return RASTER_DEV_XYZ_CONFIG_FILE
+
+
+def validate_config(cfg: Raster_Dev_xyzConfig) -> List[str]:
+    errors: List[str] = []
+    if not cfg.rpc_url or not cfg.rpc_url.startswith(("http://", "https://")):
+        errors.append("rpc_url must be a valid HTTP(S) URL")
+    if cfg.chain_id < 1:
+        errors.append("chain_id must be >= 1")
+    if cfg.gas_limit < 21000:
+        errors.append("gas_limit must be >= 21000")
+    if cfg.contract_address and not Raster_Dev_xyzValidation.is_valid_address(cfg.contract_address):
+        errors.append("contract_address must be 0x + 40 hex")
+    return errors
+
+
+def run_status_and_return_json(contract_address: str, rpc_url: str) -> Dict[str, Any]:
+    cfg = Raster_Dev_xyzConfig(rpc_url=rpc_url, contract_address=contract_address)
+    client = Raster_Dev_xyzContractClient(cfg)
+    out: Dict[str, Any] = {"ok": False, "chain_id": 0, "order_count": 0, "position_count": 0, "total_staked_wei": "0", "contract_balance_wei": "0", "vault_balance_wei": "0", "claw_paused": True}
+    if not client.connect():
+        return out
+    out["ok"] = True
+    out["chain_id"] = client.get_chain_id()
+    out["order_count"] = client.get_order_count()
+    if client.contract:
+        try:
+            out["position_count"] = client.contract.functions.positionCounter().call()
+        except Exception:
+            out["position_count"] = 0
+    out["total_staked_wei"] = str(client.get_total_staked_wei())
+    out["contract_balance_wei"] = str(client.get_contract_balance())
+    out["vault_balance_wei"] = str(client.get_vault_balance())
+    out["claw_paused"] = client.get_claw_paused()
+    return out
+
