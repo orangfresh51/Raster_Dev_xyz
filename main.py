@@ -1422,3 +1422,92 @@ def run_status_and_return_json(contract_address: str, rpc_url: str) -> Dict[str,
     out["claw_paused"] = client.get_claw_paused()
     return out
 
+
+def run_order_count_and_return(contract_address: str, rpc_url: str) -> int:
+    cfg = Raster_Dev_xyzConfig(rpc_url=rpc_url, contract_address=contract_address)
+    client = Raster_Dev_xyzContractClient(cfg)
+    if not client.connect() or not client.contract:
+        return 0
+    return client.get_order_count()
+
+
+def run_get_order_json(contract_address: str, rpc_url: str, order_id: int) -> Optional[Dict[str, Any]]:
+    cfg = Raster_Dev_xyzConfig(rpc_url=rpc_url, contract_address=contract_address)
+    client = Raster_Dev_xyzContractClient(cfg)
+    if not client.connect():
+        return None
+    o = client.get_order(order_id)
+    if o is None:
+        return None
+    return {k: str(v) for k, v in o.items()}
+
+
+def run_get_position_json(contract_address: str, rpc_url: str, position_id: int) -> Optional[Dict[str, Any]]:
+    cfg = Raster_Dev_xyzConfig(rpc_url=rpc_url, contract_address=contract_address)
+    client = Raster_Dev_xyzContractClient(cfg)
+    if not client.connect():
+        return None
+    p = client.get_position(position_id)
+    if p is None:
+        return None
+    return {k: str(v) for k, v in p.items()}
+
+
+def run_get_strategy_json(contract_address: str, rpc_url: str, strategy_id: int) -> Optional[Dict[str, Any]]:
+    cfg = Raster_Dev_xyzConfig(rpc_url=rpc_url, contract_address=contract_address)
+    client = Raster_Dev_xyzContractClient(cfg)
+    if not client.connect():
+        return None
+    s = client.get_strategy(strategy_id)
+    if s is None:
+        return None
+    return {k: str(v) for k, v in s.items()}
+
+
+def run_get_round_json(contract_address: str, rpc_url: str, round_id: int) -> Optional[Dict[str, Any]]:
+    cfg = Raster_Dev_xyzConfig(rpc_url=rpc_url, contract_address=contract_address)
+    client = Raster_Dev_xyzContractClient(cfg)
+    if not client.connect():
+        return None
+    r = client.get_round(round_id)
+    if r is None:
+        return None
+    return r
+
+
+def print_status_json(contract_address: str, rpc_url: str) -> None:
+    print(json.dumps(run_status_and_return_json(contract_address, rpc_url), indent=2))
+
+
+def print_order_json(contract_address: str, rpc_url: str, order_id: int) -> None:
+    o = run_get_order_json(contract_address, rpc_url, order_id)
+    print(json.dumps(o, indent=2) if o is not None else "null")
+
+
+def print_position_json(contract_address: str, rpc_url: str, position_id: int) -> None:
+    p = run_get_position_json(contract_address, rpc_url, position_id)
+    print(json.dumps(p, indent=2) if p is not None else "null")
+
+
+def print_strategy_json(contract_address: str, rpc_url: str, strategy_id: int) -> None:
+    s = run_get_strategy_json(contract_address, rpc_url, strategy_id)
+    print(json.dumps(s, indent=2) if s is not None else "null")
+
+
+def print_round_json(contract_address: str, rpc_url: str, round_id: int) -> None:
+    r = run_get_round_json(contract_address, rpc_url, round_id)
+    print(json.dumps(r, indent=2) if r is not None else "null")
+
+
+def cmd_status_json(config: Raster_Dev_xyzConfig, _args: argparse.Namespace) -> int:
+    addr = config.contract_address or ""
+    rpc = config.rpc_url or RASTER_DEV_XYZ_DEFAULT_RPC
+    if not addr:
+        print(json.dumps({"ok": False, "error": "contract_address not set"}))
+        return 1
+    print(json.dumps(run_status_and_return_json(addr, rpc), indent=2))
+    return 0
+
+
+def cmd_list_orders(config: Raster_Dev_xyzConfig, args: argparse.Namespace) -> int:
+    client = Raster_Dev_xyzContractClient(config)
