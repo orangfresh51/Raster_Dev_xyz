@@ -977,3 +977,92 @@ def main() -> int:
     p_we = sub.add_parser("wei-to-ether", help="Convert wei to ETH")
     p_we.add_argument("wei", type=int)
     p_we.set_defaults(func=cmd_wei_to_ether)
+    _add_common_args(p_we)
+
+    args = parser.parse_args()
+    config = Raster_Dev_xyzConfig.load(args.config) if hasattr(args, "config") and args.config else Raster_Dev_xyzConfig.load()
+    if hasattr(args, "rpc") and args.rpc:
+        config.rpc_url = args.rpc
+    if hasattr(args, "contract") and args.contract:
+        config.contract_address = args.contract
+    if hasattr(args, "verbose") and args.verbose:
+        set_verbose(True)
+
+    if not getattr(args, "command", None) or not hasattr(args, "func"):
+        parser.print_help()
+        return 0
+    return args.func(config, args)
+
+
+# -----------------------------------------------------------------------------
+# Programmatic API (single-file export)
+# -----------------------------------------------------------------------------
+
+def get_config(path: Optional[str] = None) -> Raster_Dev_xyzConfig:
+    return Raster_Dev_xyzConfig.load(path)
+
+
+def get_client(config: Optional[Raster_Dev_xyzConfig] = None) -> Raster_Dev_xyzContractClient:
+    cfg = config or get_config()
+    c = Raster_Dev_xyzContractClient(cfg)
+    c.connect()
+    return c
+
+
+def query_order(contract_address: str, rpc_url: str, order_id: int) -> Optional[Dict[str, Any]]:
+    cfg = Raster_Dev_xyzConfig(rpc_url=rpc_url, contract_address=contract_address)
+    client = Raster_Dev_xyzContractClient(cfg)
+    if not client.connect():
+        return None
+    return client.get_order(order_id)
+
+
+def query_position(contract_address: str, rpc_url: str, position_id: int) -> Optional[Dict[str, Any]]:
+    cfg = Raster_Dev_xyzConfig(rpc_url=rpc_url, contract_address=contract_address)
+    client = Raster_Dev_xyzContractClient(cfg)
+    if not client.connect():
+        return None
+    return client.get_position(position_id)
+
+
+def query_strategy(contract_address: str, rpc_url: str, strategy_id: int) -> Optional[Dict[str, Any]]:
+    cfg = Raster_Dev_xyzConfig(rpc_url=rpc_url, contract_address=contract_address)
+    client = Raster_Dev_xyzContractClient(cfg)
+    if not client.connect():
+        return None
+    return client.get_strategy(strategy_id)
+
+
+def query_round(contract_address: str, rpc_url: str, round_id: int) -> Optional[Dict[str, Any]]:
+    cfg = Raster_Dev_xyzConfig(rpc_url=rpc_url, contract_address=contract_address)
+    client = Raster_Dev_xyzContractClient(cfg)
+    if not client.connect():
+        return None
+    return client.get_round(round_id)
+
+
+def query_total_staked(contract_address: str, rpc_url: str) -> int:
+    cfg = Raster_Dev_xyzConfig(rpc_url=rpc_url, contract_address=contract_address)
+    client = Raster_Dev_xyzContractClient(cfg)
+    if not client.connect():
+        return 0
+    return client.get_total_staked_wei()
+
+
+def query_vault_balance(contract_address: str, rpc_url: str) -> int:
+    cfg = Raster_Dev_xyzConfig(rpc_url=rpc_url, contract_address=contract_address)
+    client = Raster_Dev_xyzContractClient(cfg)
+    if not client.connect():
+        return 0
+    return client.get_vault_balance()
+
+
+def query_contract_balance(contract_address: str, rpc_url: str) -> int:
+    cfg = Raster_Dev_xyzConfig(rpc_url=rpc_url, contract_address=contract_address)
+    client = Raster_Dev_xyzContractClient(cfg)
+    if not client.connect():
+        return 0
+    return client.get_contract_balance()
+
+
+def query_claw_paused(contract_address: str, rpc_url: str) -> bool:
