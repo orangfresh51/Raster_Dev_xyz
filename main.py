@@ -354,3 +354,92 @@ class Raster_Dev_xyzContractClient:
         try:
             t = self._contract.functions.getPosition(position_id).call()
             return {
+                "user": t[0],
+                "strategyId": t[1],
+                "sizeWei": t[2],
+                "openedAtBlock": t[3],
+                "entryPriceE8": t[4],
+                "closed": t[5],
+                "realisedWei": t[6],
+            }
+        except Exception:
+            return None
+
+    def get_strategy(self, strategy_id: int) -> Optional[Dict[str, Any]]:
+        if not self._contract:
+            return None
+        try:
+            t = self._contract.functions.getStrategy(strategy_id).call()
+            return {
+                "allocCapWei": t[0],
+                "allocUsedWei": t[1],
+                "tickEpoch": t[2],
+                "lastTickBlock": t[3],
+                "sealed": t[4],
+                "active": t[5],
+                "confidenceTier": t[6],
+            }
+        except Exception:
+            return None
+
+    def get_round(self, round_id: int) -> Optional[Dict[str, Any]]:
+        if not self._contract:
+            return None
+        try:
+            t = self._contract.functions.getRound(round_id).call()
+            return {
+                "promptDigest": t[0].hex() if hasattr(t[0], "hex") else t[0],
+                "responseRoot": t[1].hex() if hasattr(t[1], "hex") else t[1],
+                "startedAt": t[2],
+                "sealedAt": t[3],
+                "finalized": t[4],
+                "confidenceTier": t[5],
+                "proposer": t[6],
+            }
+        except Exception:
+            return None
+
+    def get_total_staked_wei(self) -> int:
+        if not self._contract:
+            return 0
+        return self._contract.functions.getTotalStakedWei().call()
+
+    def get_user_stake_wei(self, address: str) -> int:
+        if not self._contract:
+            return 0
+        addr = Web3.to_checksum_address(address) if HAS_WEB3 else address
+        return self._contract.functions.getUserStakeWei(addr).call()
+
+    def get_contract_balance(self) -> int:
+        if not self._contract:
+            return 0
+        return self._contract.functions.getContractBalance().call()
+
+    def get_vault_balance(self) -> int:
+        if not self._contract:
+            return 0
+        return self._contract.functions.getVaultBalance().call()
+
+    def get_claw_paused(self) -> bool:
+        if not self._contract:
+            return True
+        return self._contract.functions.clawPaused().call()
+
+    def place_order(
+        self,
+        token_in: str,
+        token_out: str,
+        amount_in: int,
+        amount_out_min: int,
+        deadline: int,
+    ) -> Optional[int]:
+        if not self._contract or not self._account:
+            return None
+        try:
+            tx = self._contract.functions.placeOrder(
+                Web3.to_checksum_address(token_in),
+                Web3.to_checksum_address(token_out),
+                amount_in,
+                amount_out_min,
+                deadline,
+            ).build_transaction({
