@@ -1511,3 +1511,92 @@ def cmd_status_json(config: Raster_Dev_xyzConfig, _args: argparse.Namespace) -> 
 
 def cmd_list_orders(config: Raster_Dev_xyzConfig, args: argparse.Namespace) -> int:
     client = Raster_Dev_xyzContractClient(config)
+    if not client.connect() or not client.contract:
+        print("[]")
+        return 1
+    end = client.get_order_count()
+    start = getattr(args, "start", 1)
+    limit = getattr(args, "limit", 50)
+    start = max(1, min(start, end))
+    limit = min(limit, end - start + 1)
+    orders_list = list_orders_range(config.contract_address or "", config.rpc_url, start, start + limit - 1)
+    print(json.dumps(orders_list, indent=2))
+    return 0
+
+
+def cmd_list_positions(config: Raster_Dev_xyzConfig, args: argparse.Namespace) -> int:
+    client = Raster_Dev_xyzContractClient(config)
+    if not client.connect() or not client.contract:
+        print("[]")
+        return 1
+    try:
+        end = client.contract.functions.positionCounter().call()
+    except Exception:
+        end = 0
+    start = getattr(args, "start", 1)
+    limit = getattr(args, "limit", 50)
+    start = max(1, min(start, end))
+    limit = min(limit, max(0, end - start + 1))
+    if limit <= 0:
+        print("[]")
+        return 0
+    positions_list = list_positions_range(config.contract_address or "", config.rpc_url, start, start + limit - 1)
+    print(json.dumps(positions_list, indent=2))
+    return 0
+
+
+def cmd_list_strategies(config: Raster_Dev_xyzConfig, args: argparse.Namespace) -> int:
+    addr = config.contract_address or ""
+    if not addr:
+        print("[]")
+        return 1
+    start = getattr(args, "start", 0)
+    limit = getattr(args, "limit", 20)
+    strategies_list = list_strategies_range(addr, config.rpc_url, start, start + limit - 1)
+    print(json.dumps(strategies_list, indent=2))
+    return 0
+
+
+def cmd_list_rounds(config: Raster_Dev_xyzConfig, args: argparse.Namespace) -> int:
+    client = Raster_Dev_xyzContractClient(config)
+    if not client.connect() or not client.contract:
+        print("[]")
+        return 1
+    try:
+        end = client.contract.functions.getRoundCounter().call()
+    except Exception:
+        end = 0
+    start = getattr(args, "start", 1)
+    limit = getattr(args, "limit", 50)
+    start = max(1, min(start, end))
+    limit = min(limit, max(0, end - start + 1))
+    if limit <= 0:
+        print("[]")
+        return 0
+    rounds_list = list_rounds_range(config.contract_address or "", config.rpc_url, start, start + limit - 1)
+    print(json.dumps(rounds_list, indent=2))
+    return 0
+
+
+def cmd_config_show(config: Raster_Dev_xyzConfig, args: argparse.Namespace) -> int:
+    d = config_get_all(getattr(args, "config", None))
+    print(json.dumps(d, indent=2))
+    return 0
+
+
+def cmd_config_set_rpc(config: Raster_Dev_xyzConfig, args: argparse.Namespace) -> int:
+    path = getattr(args, "config", None) or RASTER_DEV_XYZ_CONFIG_FILE
+    rpc = getattr(args, "rpc_url", None) or getattr(args, "rpc", None)
+    if not rpc:
+        print("Missing --rpc or rpc_url", file=sys.stderr)
+        return 1
+    config_set_rpc(path, rpc)
+    print("RPC URL updated.")
+    return 0
+
+
+def cmd_config_set_contract(config: Raster_Dev_xyzConfig, args: argparse.Namespace) -> int:
+    path = getattr(args, "config", None) or RASTER_DEV_XYZ_CONFIG_FILE
+    addr = getattr(args, "contract_address", None) or getattr(args, "address", None)
+    if not addr:
+        print("Missing --contract or address", file=sys.stderr)
