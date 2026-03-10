@@ -888,3 +888,92 @@ def main() -> int:
 
     # generate-addresses
     p_ga = sub.add_parser("generate-addresses", help="Generate EIP-55 addresses")
+    p_ga.add_argument("count", type=int, nargs="?", default=8)
+    p_ga.set_defaults(func=cmd_generate_addresses)
+    _add_common_args(p_ga)
+
+    # checksum-address
+    p_ca = sub.add_parser("checksum-address", help="EIP-55 checksum an address")
+    p_ca.add_argument("address", type=str)
+    p_ca.set_defaults(func=cmd_checksum_address)
+    _add_common_args(p_ca)
+
+    # status-json
+    p_sj = sub.add_parser("status-json", help="Status as JSON")
+    p_sj.set_defaults(func=cmd_status_json)
+    _add_common_args(p_sj)
+
+    # list-orders
+    p_lo = sub.add_parser("list-orders", help="List orders in range")
+    p_lo.add_argument("--start", type=int, default=1)
+    p_lo.add_argument("--limit", type=int, default=50)
+    p_lo.set_defaults(func=cmd_list_orders)
+    _add_common_args(p_lo)
+
+    # list-positions
+    p_lp = sub.add_parser("list-positions", help="List positions in range")
+    p_lp.add_argument("--start", type=int, default=1)
+    p_lp.add_argument("--limit", type=int, default=50)
+    p_lp.set_defaults(func=cmd_list_positions)
+    _add_common_args(p_lp)
+
+    # list-strategies
+    p_ls = sub.add_parser("list-strategies", help="List strategies in range")
+    p_ls.add_argument("--start", type=int, default=0)
+    p_ls.add_argument("--limit", type=int, default=20)
+    p_ls.set_defaults(func=cmd_list_strategies)
+    _add_common_args(p_ls)
+
+    # list-rounds
+    p_lr = sub.add_parser("list-rounds", help="List rounds in range")
+    p_lr.add_argument("--start", type=int, default=1)
+    p_lr.add_argument("--limit", type=int, default=50)
+    p_lr.set_defaults(func=cmd_list_rounds)
+    _add_common_args(p_lr)
+
+    # config-show
+    p_csh = sub.add_parser("config-show", help="Show config as JSON")
+    p_csh.set_defaults(func=cmd_config_show)
+    _add_common_args(p_csh)
+
+    # config-set-rpc
+    p_csr = sub.add_parser("config-set-rpc", help="Set RPC URL")
+    p_csr.add_argument("rpc_url", type=str)
+    p_csr.set_defaults(func=cmd_config_set_rpc)
+    _add_common_args(p_csr)
+
+    # config-set-contract
+    p_csc = sub.add_parser("config-set-contract", help="Set contract address")
+    p_csc.add_argument("contract_address", type=str)
+    p_csc.set_defaults(func=cmd_config_set_contract)
+    _add_common_args(p_csc)
+
+    # validate-address
+    p_va = sub.add_parser("validate-address", help="Validate and optionally checksum address")
+    p_va.add_argument("address", type=str)
+    p_va.set_defaults(func=cmd_validate_address)
+    _add_common_args(p_va)
+
+    # compute-deadline
+    p_cd = sub.add_parser("compute-deadline", help="Unix deadline from now (minutes)")
+    p_cd.add_argument("--minutes", type=int, default=30)
+    p_cd.set_defaults(func=cmd_compute_deadline)
+    _add_common_args(p_cd)
+
+    # compute-slippage-min
+    p_csm = sub.add_parser("compute-slippage-min", help="Min amount out given slippage bps")
+    p_csm.add_argument("amount_out", type=int)
+    p_csm.add_argument("--slippage-bps", type=int, default=RASTER_DEV_XYZ_DEFAULT_SLIPPAGE_BPS)
+    p_csm.set_defaults(func=cmd_compute_slippage_min)
+    _add_common_args(p_csm)
+
+    # ether-to-wei
+    p_ew = sub.add_parser("ether-to-wei", help="Convert ETH to wei")
+    p_ew.add_argument("eth", type=float)
+    p_ew.set_defaults(func=cmd_ether_to_wei)
+    _add_common_args(p_ew)
+
+    # wei-to-ether
+    p_we = sub.add_parser("wei-to-ether", help="Convert wei to ETH")
+    p_we.add_argument("wei", type=int)
+    p_we.set_defaults(func=cmd_wei_to_ether)
