@@ -87,3 +87,92 @@ def to_checksum_address(address_hex: str) -> str:
             return Web3.to_checksum_address("0x" + addr)
     except Exception:
         pass
+    raw = addr.encode("ascii")
+    digest = _keccak256_hex(raw)
+    result = []
+    for i, c in enumerate(addr):
+        if c in "0123456789":
+            result.append(c)
+        else:
+            nibble = int(digest[i], 16)
+            result.append(c.upper() if nibble >= 8 else c.lower())
+    return "0x" + "".join(result)
+
+
+def random_address_eip55() -> str:
+    """Generate a random 20-byte address and return EIP-55 checksummed."""
+    raw = os.urandom(RASTER_DEV_XYZ_ADDRESS_BYTES)
+    addr_hex = raw.hex()
+    return to_checksum_address("0x" + addr_hex)
+
+
+def generate_unique_addresses(count: int = 8) -> List[str]:
+    """Generate `count` unique EIP-55 addresses (e.g. for contract deployment)."""
+    seen: set = set()
+    out: List[str] = []
+    while len(out) < count:
+        a = random_address_eip55()
+        if a not in seen:
+            seen.add(a)
+            out.append(a)
+    return out
+
+
+# -----------------------------------------------------------------------------
+# Logging
+# -----------------------------------------------------------------------------
+
+import logging
+
+_logger: Optional[logging.Logger] = None
+
+
+def get_logger(name: str = "raster_dev_xyz") -> logging.Logger:
+    global _logger
+    if _logger is None:
+        _logger = logging.getLogger(name)
+        if not _logger.handlers:
+            h = logging.StreamHandler(sys.stderr)
+            h.setFormatter(logging.Formatter(RASTER_DEV_XYZ_LOG_FORMAT, RASTER_DEV_XYZ_DATE_FORMAT))
+            _logger.addHandler(h)
+            _logger.setLevel(logging.INFO)
+    return _logger
+
+
+def set_verbose(verbose: bool) -> None:
+    get_logger().setLevel(logging.DEBUG if verbose else logging.INFO)
+
+
+# -----------------------------------------------------------------------------
+# Config
+# -----------------------------------------------------------------------------
+
+
+@dataclass
+class Raster_Dev_xyzConfig:
+    rpc_url: str = RASTER_DEV_XYZ_DEFAULT_RPC
+    chain_id: int = RASTER_DEV_XYZ_CHAIN_ID_MAINNET
+    contract_address: Optional[str] = None
+    private_key: Optional[str] = None
+    gas_limit: int = RASTER_DEV_XYZ_GAS_LIMIT_DEFAULT
+    gas_multiplier: float = RASTER_DEV_XYZ_GAS_MULTIPLIER
+    max_fee_per_gas_gwei: Optional[float] = None
+    max_priority_fee_gwei: Optional[float] = None
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "rpc_url": self.rpc_url,
+            "chain_id": self.chain_id,
+            "contract_address": self.contract_address,
+            "gas_limit": self.gas_limit,
+            "gas_multiplier": self.gas_multiplier,
+            "max_fee_per_gas_gwei": self.max_fee_per_gas_gwei,
+            "max_priority_fee_gwei": self.max_priority_fee_gwei,
+        }
+
+    @classmethod
+    def from_dict(cls, d: Dict[str, Any]) -> Raster_Dev_xyzConfig:
+        return cls(
+            rpc_url=d.get("rpc_url", RASTER_DEV_XYZ_DEFAULT_RPC),
+            chain_id=int(d.get("chain_id", RASTER_DEV_XYZ_CHAIN_ID_MAINNET)),
+            contract_address=d.get("contract_address"),
