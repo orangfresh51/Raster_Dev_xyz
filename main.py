@@ -265,3 +265,92 @@ ANNA_ABI = [
     {"inputs": [{"name": "strategyId", "type": "uint256"}, {"name": "sizeWei", "type": "uint256"}], "name": "openPosition", "outputs": [{"name": "positionId", "type": "uint256"}], "stateMutability": "nonpayable", "type": "function"},
     {"inputs": [{"name": "positionId", "type": "uint256"}, {"name": "realisedWei", "type": "uint256"}], "name": "closePosition", "outputs": [], "stateMutability": "nonpayable", "type": "function"},
     {"inputs": [], "name": "recordDeposit", "outputs": [{"name": "depositId", "type": "uint256"}], "stateMutability": "payable", "type": "function"},
+    {"inputs": [], "name": "getContractBalance", "outputs": [{"name": "", "type": "uint256"}], "stateMutability": "view", "type": "function"},
+    {"inputs": [], "name": "getVaultBalance", "outputs": [{"name": "", "type": "uint256"}], "stateMutability": "view", "type": "function"},
+    {"inputs": [{"name": "roundId", "type": "uint256"}], "name": "getRound", "outputs": [{"name": "promptDigest", "type": "bytes32"}, {"name": "responseRoot", "type": "bytes32"}, {"name": "startedAt", "type": "uint256"}, {"name": "sealedAt", "type": "uint256"}, {"name": "finalized", "type": "bool"}, {"name": "confidenceTier", "type": "uint8"}, {"name": "proposer", "type": "address"}], "stateMutability": "view", "type": "function"},
+    {"inputs": [], "name": "getRoundCounter", "outputs": [{"name": "", "type": "uint256"}], "stateMutability": "view", "type": "function"},
+]
+
+
+# -----------------------------------------------------------------------------
+# Web3 / Contract client
+# -----------------------------------------------------------------------------
+
+
+class Raster_Dev_xyzContractClient:
+    """Client for WomblePulse contract; uses Web3 when available."""
+
+    def __init__(self, config: Raster_Dev_xyzConfig) -> None:
+        self.config = config
+        self._w3: Any = None
+        self._contract: Any = None
+        self._account: Any = None
+        if not HAS_WEB3:
+            get_logger().warning("web3 not installed; only offline/address utilities available.")
+
+    def connect(self) -> bool:
+        if not HAS_WEB3:
+            return False
+        try:
+            self._w3 = Web3(Web3.HTTPProvider(self.config.rpc_url))
+            if not self._w3.is_connected():
+                get_logger().error("RPC not connected: %s", self.config.rpc_url)
+                return False
+            if self.config.contract_address:
+                self._contract = self._w3.eth.contract(
+                    address=Web3.to_checksum_address(self.config.contract_address),
+                    abi=ANNA_ABI,
+                )
+            if self.config.private_key:
+                self._account = self._w3.eth.account.from_key(self.config.private_key)
+            return True
+        except Exception as e:
+            get_logger().exception("Connect failed: %s", e)
+            return False
+
+    @property
+    def w3(self) -> Any:
+        return self._w3
+
+    @property
+    def contract(self) -> Any:
+        return self._contract
+
+    @property
+    def account(self) -> Any:
+        return self._account
+
+    def get_chain_id(self) -> int:
+        if self._w3:
+            return self._w3.eth.chain_id
+        return self.config.chain_id
+
+    def get_order_count(self) -> int:
+        if not self._contract:
+            return 0
+        return self._contract.functions.getOrderCount().call()
+
+    def get_order(self, order_id: int) -> Optional[Dict[str, Any]]:
+        if not self._contract:
+            return None
+        try:
+            t = self._contract.functions.getOrder(order_id).call()
+            return {
+                "tokenIn": t[0],
+                "tokenOut": t[1],
+                "amountIn": t[2],
+                "amountOutMin": t[3],
+                "deadline": t[4],
+                "filled": t[5],
+                "cancelled": t[6],
+                "placedAtBlock": t[7],
+            }
+        except Exception:
+            return None
+
+    def get_position(self, position_id: int) -> Optional[Dict[str, Any]]:
+        if not self._contract:
+            return None
+        try:
+            t = self._contract.functions.getPosition(position_id).call()
+            return {
