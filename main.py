@@ -710,3 +710,92 @@ def cmd_get_round(config: Raster_Dev_xyzConfig, args: argparse.Namespace) -> int
 def cmd_deposit_stake(config: Raster_Dev_xyzConfig, args: argparse.Namespace) -> int:
     client = Raster_Dev_xyzContractClient(config)
     if not client.connect():
+        return 1
+    value_wei = ether_to_wei(args.amount)
+    if client.deposit_stake(value_wei):
+        print("Deposit stake tx sent.")
+        return 0
+    return 1
+
+
+def cmd_request_withdraw(config: Raster_Dev_xyzConfig, args: argparse.Namespace) -> int:
+    client = Raster_Dev_xyzContractClient(config)
+    if not client.connect():
+        return 1
+    value_wei = ether_to_wei(args.amount)
+    if client.request_withdraw_stake(value_wei):
+        print("Withdraw request tx sent.")
+        return 0
+    return 1
+
+
+def cmd_top_treasury(config: Raster_Dev_xyzConfig, args: argparse.Namespace) -> int:
+    client = Raster_Dev_xyzContractClient(config)
+    if not client.connect():
+        return 1
+    value_wei = ether_to_wei(args.amount)
+    if client.top_treasury(value_wei):
+        print("Top treasury tx sent.")
+        return 0
+    return 1
+
+
+def cmd_open_position(config: Raster_Dev_xyzConfig, args: argparse.Namespace) -> int:
+    client = Raster_Dev_xyzContractClient(config)
+    if not client.connect():
+        return 1
+    size_wei = ether_to_wei(args.size)
+    pid = client.open_position(args.strategy_id, size_wei)
+    if pid is not None:
+        print("Position ID:", pid)
+        return 0
+    return 1
+
+
+def cmd_close_position(config: Raster_Dev_xyzConfig, args: argparse.Namespace) -> int:
+    client = Raster_Dev_xyzContractClient(config)
+    if not client.connect():
+        return 1
+    realised_wei = ether_to_wei(args.realised)
+    if client.close_position(args.position_id, realised_wei):
+        print("Close position tx sent.")
+        return 0
+    return 1
+
+
+def cmd_record_deposit(config: Raster_Dev_xyzConfig, args: argparse.Namespace) -> int:
+    client = Raster_Dev_xyzContractClient(config)
+    if not client.connect():
+        return 1
+    value_wei = ether_to_wei(args.amount)
+    did = client.record_deposit(value_wei)
+    if did is not None:
+        print("Deposit ID:", did)
+        return 0
+    return 1
+
+
+def cmd_generate_addresses(config: Raster_Dev_xyzConfig, args: argparse.Namespace) -> int:
+    n = getattr(args, "count", 8)
+    addrs = generate_unique_addresses(n)
+    for a in addrs:
+        print(a)
+    return 0
+
+
+def cmd_checksum_address(config: Raster_Dev_xyzConfig, args: argparse.Namespace) -> int:
+    addr = getattr(args, "address", None) or (args.address if hasattr(args, "address") else None)
+    if not addr:
+        print("Usage: raster_dev_xyz checksum-address <0x...>", file=sys.stderr)
+        return 1
+    try:
+        print(to_checksum_address(addr))
+        return 0
+    except Exception as e:
+        print(e, file=sys.stderr)
+        return 1
+
+
+# -----------------------------------------------------------------------------
+# Subparsers and main
+# -----------------------------------------------------------------------------
