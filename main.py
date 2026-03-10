@@ -799,3 +799,92 @@ def cmd_checksum_address(config: Raster_Dev_xyzConfig, args: argparse.Namespace)
 # -----------------------------------------------------------------------------
 # Subparsers and main
 # -----------------------------------------------------------------------------
+
+
+def _add_common_args(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--config", default=None, help="Config file path")
+    parser.add_argument("--rpc", default=None, help="RPC URL override")
+    parser.add_argument("--contract", default=None, help="Contract address override")
+    parser.add_argument("--verbose", "-v", action="store_true", help="Verbose logging")
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(prog=RASTER_DEV_XYZ_APP_NAME, description="Raster_Dev_xyz — WomblePulse clawbot companion app")
+    parser.add_argument("--version", action="version", version=f"%(prog)s {RASTER_DEV_XYZ_VERSION}")
+    _add_common_args(parser)
+    sub = parser.add_subparsers(dest="command", help="Commands")
+
+    # status
+    p_status = sub.add_parser("status", help="Show contract status")
+    p_status.set_defaults(func=cmd_status)
+    _add_common_args(p_status)
+
+    # order-count
+    p_oc = sub.add_parser("order-count", help="Get order count")
+    p_oc.set_defaults(func=cmd_order_count)
+    _add_common_args(p_oc)
+
+    # get-order
+    p_go = sub.add_parser("get-order", help="Get order by ID")
+    p_go.add_argument("order_id", type=int)
+    p_go.set_defaults(func=cmd_get_order)
+    _add_common_args(p_go)
+
+    # get-position
+    p_gp = sub.add_parser("get-position", help="Get position by ID")
+    p_gp.add_argument("position_id", type=int)
+    p_gp.set_defaults(func=cmd_get_position)
+    _add_common_args(p_gp)
+
+    # get-strategy
+    p_gs = sub.add_parser("get-strategy", help="Get strategy by ID")
+    p_gs.add_argument("strategy_id", type=int)
+    p_gs.set_defaults(func=cmd_get_strategy)
+    _add_common_args(p_gs)
+
+    # get-round
+    p_gr = sub.add_parser("get-round", help="Get round by ID")
+    p_gr.add_argument("round_id", type=int)
+    p_gr.set_defaults(func=cmd_get_round)
+    _add_common_args(p_gr)
+
+    # deposit-stake
+    p_ds = sub.add_parser("deposit-stake", help="Deposit stake (ETH)")
+    p_ds.add_argument("amount", type=float, help="Amount in ETH")
+    p_ds.set_defaults(func=cmd_deposit_stake)
+    _add_common_args(p_ds)
+
+    # request-withdraw
+    p_rw = sub.add_parser("request-withdraw", help="Request withdraw stake")
+    p_rw.add_argument("amount", type=float, help="Amount in ETH")
+    p_rw.set_defaults(func=cmd_request_withdraw)
+    _add_common_args(p_rw)
+
+    # top-treasury
+    p_tt = sub.add_parser("top-treasury", help="Top up treasury (ETH)")
+    p_tt.add_argument("amount", type=float, help="Amount in ETH")
+    p_tt.set_defaults(func=cmd_top_treasury)
+    _add_common_args(p_tt)
+
+    # open-position
+    p_op = sub.add_parser("open-position", help="Open position")
+    p_op.add_argument("strategy_id", type=int)
+    p_op.add_argument("size", type=float, help="Size in ETH")
+    p_op.set_defaults(func=cmd_open_position)
+    _add_common_args(p_op)
+
+    # close-position
+    p_cp = sub.add_parser("close-position", help="Close position")
+    p_cp.add_argument("position_id", type=int)
+    p_cp.add_argument("realised", type=float, help="Realised amount in ETH")
+    p_cp.set_defaults(func=cmd_close_position)
+    _add_common_args(p_cp)
+
+    # record-deposit
+    p_rd = sub.add_parser("record-deposit", help="Record deposit (ETH)")
+    p_rd.add_argument("amount", type=float, help="Amount in ETH")
+    p_rd.set_defaults(func=cmd_record_deposit)
+    _add_common_args(p_rd)
+
+    # generate-addresses
+    p_ga = sub.add_parser("generate-addresses", help="Generate EIP-55 addresses")
