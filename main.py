@@ -1244,3 +1244,92 @@ def format_round(r: Dict[str, Any]) -> str:
         f"Round promptDigest={r.get('promptDigest','')} responseRoot={r.get('responseRoot','')} "
         f"startedAt={r.get('startedAt',0)} sealedAt={r.get('sealedAt',0)} finalized={r.get('finalized',False)} "
         f"proposer={r.get('proposer','')}"
+    )
+
+
+def parse_wei(s: str) -> int:
+    """Parse wei from string (decimal or hex)."""
+    s = s.strip()
+    if s.startswith("0x"):
+        return int(s, 16)
+    return int(s)
+
+
+def parse_ether(s: str) -> int:
+    """Parse ETH amount string to wei."""
+    return ether_to_wei(float(s))
+
+
+def safe_get_order(client: Raster_Dev_xyzContractClient, order_id: int) -> Optional[Dict[str, Any]]:
+    for _ in range(RASTER_DEV_XYZ_MAX_RETRIES):
+        try:
+            return client.get_order(order_id)
+        except Exception:
+            time.sleep(RASTER_DEV_XYZ_RETRY_DELAY_SEC)
+    return None
+
+
+def safe_get_position(client: Raster_Dev_xyzContractClient, position_id: int) -> Optional[Dict[str, Any]]:
+    for _ in range(RASTER_DEV_XYZ_MAX_RETRIES):
+        try:
+            return client.get_position(position_id)
+        except Exception:
+            time.sleep(RASTER_DEV_XYZ_RETRY_DELAY_SEC)
+    return None
+
+
+def safe_get_strategy(client: Raster_Dev_xyzContractClient, strategy_id: int) -> Optional[Dict[str, Any]]:
+    for _ in range(RASTER_DEV_XYZ_MAX_RETRIES):
+        try:
+            return client.get_strategy(strategy_id)
+        except Exception:
+            time.sleep(RASTER_DEV_XYZ_RETRY_DELAY_SEC)
+    return None
+
+
+def safe_get_round(client: Raster_Dev_xyzContractClient, round_id: int) -> Optional[Dict[str, Any]]:
+    for _ in range(RASTER_DEV_XYZ_MAX_RETRIES):
+        try:
+            return client.get_round(round_id)
+        except Exception:
+            time.sleep(RASTER_DEV_XYZ_RETRY_DELAY_SEC)
+    return None
+
+
+def batch_query_orders(contract_address: str, rpc_url: str, order_ids: List[int]) -> Dict[int, Optional[Dict[str, Any]]]:
+    cfg = Raster_Dev_xyzConfig(rpc_url=rpc_url, contract_address=contract_address)
+    client = Raster_Dev_xyzContractClient(cfg)
+    result: Dict[int, Optional[Dict[str, Any]]] = {}
+    if not client.connect():
+        for oid in order_ids:
+            result[oid] = None
+        return result
+    for oid in order_ids:
+        result[oid] = client.get_order(oid)
+    return result
+
+
+def batch_query_positions(contract_address: str, rpc_url: str, position_ids: List[int]) -> Dict[int, Optional[Dict[str, Any]]]:
+    cfg = Raster_Dev_xyzConfig(rpc_url=rpc_url, contract_address=contract_address)
+    client = Raster_Dev_xyzContractClient(cfg)
+    result: Dict[int, Optional[Dict[str, Any]]] = {}
+    if not client.connect():
+        for pid in position_ids:
+            result[pid] = None
+        return result
+    for pid in position_ids:
+        result[pid] = client.get_position(pid)
+    return result
+
+
+def batch_query_strategies(contract_address: str, rpc_url: str, strategy_ids: List[int]) -> Dict[int, Optional[Dict[str, Any]]]:
+    cfg = Raster_Dev_xyzConfig(rpc_url=rpc_url, contract_address=contract_address)
+    client = Raster_Dev_xyzContractClient(cfg)
+    result: Dict[int, Optional[Dict[str, Any]]] = {}
+    if not client.connect():
+        for sid in strategy_ids:
+            result[sid] = None
+        return result
+    for sid in strategy_ids:
+        result[sid] = client.get_strategy(sid)
+    return result
