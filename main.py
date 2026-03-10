@@ -176,3 +176,92 @@ class Raster_Dev_xyzConfig:
             rpc_url=d.get("rpc_url", RASTER_DEV_XYZ_DEFAULT_RPC),
             chain_id=int(d.get("chain_id", RASTER_DEV_XYZ_CHAIN_ID_MAINNET)),
             contract_address=d.get("contract_address"),
+            private_key=d.get("private_key"),
+            gas_limit=int(d.get("gas_limit", RASTER_DEV_XYZ_GAS_LIMIT_DEFAULT)),
+            gas_multiplier=float(d.get("gas_multiplier", RASTER_DEV_XYZ_GAS_MULTIPLIER)),
+            max_fee_per_gas_gwei=d.get("max_fee_per_gas_gwei"),
+            max_priority_fee_gwei=d.get("max_priority_fee_gwei"),
+        )
+
+    def save(self, path: Optional[str] = None) -> None:
+        path = path or RASTER_DEV_XYZ_CONFIG_FILE
+        d = self.to_dict()
+        if self.private_key:
+            d["private_key"] = self.private_key
+        Path(os.path.dirname(path)).mkdir(parents=True, exist_ok=True)
+        with open(path, "w") as f:
+            json.dump(d, f, indent=2)
+
+    @classmethod
+    def load(cls, path: Optional[str] = None) -> Raster_Dev_xyzConfig:
+        path = path or RASTER_DEV_XYZ_CONFIG_FILE
+        if not os.path.isfile(path):
+            return cls()
+        with open(path) as f:
+            return cls.from_dict(json.load(f))
+
+
+# -----------------------------------------------------------------------------
+# WomblePulse ABI (minimal for Raster_Dev_xyz; extend as needed)
+# -----------------------------------------------------------------------------
+
+ANNA_ABI = [
+    {"inputs": [], "stateMutability": "nonpayable", "type": "constructor"},
+    {"inputs": [], "name": "WomblePulse_ClawDenied", "type": "error"},
+    {"inputs": [], "name": "WomblePulse_AllocOverflow", "type": "error"},
+    {"inputs": [], "name": "WomblePulse_VaultSweepFailed", "type": "error"},
+    {"inputs": [], "name": "WomblePulse_ZeroAmount", "type": "error"},
+    {"inputs": [], "name": "WomblePulse_ZeroAddress", "type": "error"},
+    {"inputs": [], "name": "WomblePulse_TransferReverted", "type": "error"},
+    {"inputs": [], "name": "WomblePulse_RouterReverted", "type": "error"},
+    {"inputs": [], "name": "WomblePulse_ClawPaused", "type": "error"},
+    {"inputs": [], "name": "WomblePulse_OrderMissing", "type": "error"},
+    {"inputs": [], "name": "WomblePulse_OrderAlreadySettled", "type": "error"},
+    {"inputs": [], "name": "WomblePulse_OrderCancelled", "type": "error"},
+    {"inputs": [], "name": "WomblePulse_VaultInsufficient", "type": "error"},
+    {"inputs": [], "name": "WomblePulse_DeadlinePassed", "type": "error"},
+    {"inputs": [], "name": "WomblePulse_NotOperator", "type": "error"},
+    {"inputs": [], "name": "WomblePulse_NotGovernor", "type": "error"},
+    {"inputs": [], "name": "WomblePulse_NotTreasury", "type": "error"},
+    {"inputs": [], "name": "WomblePulse_Reentrant", "type": "error"},
+    {"inputs": [], "name": "WomblePulse_InvalidStrategyId", "type": "error"},
+    {"inputs": [], "name": "WomblePulse_StrategySealed", "type": "error"},
+    {"inputs": [], "name": "WomblePulse_WithdrawOverCap", "type": "error"},
+    {"inputs": [], "name": "WomblePulse_PositionNotFound", "type": "error"},
+    {"inputs": [], "name": "WomblePulse_InvalidRoundId", "type": "error"},
+    {"inputs": [], "name": "WomblePulse_RoundNotSealed", "type": "error"},
+    {"inputs": [], "name": "WomblePulse_PathLengthInvalid", "type": "error"},
+    {"inputs": [], "name": "WomblePulse_InvalidBps", "type": "error"},
+    {"inputs": [{"name": "allocId", "type": "uint256"}, {"name": "beneficiary", "type": "address"}, {"name": "amountWei", "type": "uint256"}, {"name": "strategyId", "type": "uint256"}, {"name": "atBlock", "type": "uint40"}], "name": "ClawAllocation", "type": "event"},
+    {"inputs": [{"name": "orderId", "type": "uint256"}, {"name": "tokenIn", "type": "address"}, {"name": "tokenOut", "type": "address"}, {"name": "amountIn", "type": "uint256"}, {"name": "amountOutMin", "type": "uint256"}, {"name": "deadline", "type": "uint256"}], "name": "OrderQueued", "type": "event"},
+    {"inputs": [{"name": "orderId", "type": "uint256"}, {"name": "amountOut", "type": "uint256"}, {"name": "filledAtBlock", "type": "uint256"}], "name": "OrderFilled", "type": "event"},
+    {"inputs": [{"name": "orderId", "type": "uint256"}, {"name": "atBlock", "type": "uint256"}], "name": "OrderCancelled", "type": "event"},
+    {"inputs": [{"name": "from", "type": "address"}, {"name": "amountWei", "type": "uint256"}], "name": "TreasuryTopped", "type": "event"},
+    {"inputs": [{"name": "user", "type": "address"}, {"name": "positionId", "type": "uint256"}, {"name": "sizeWei", "type": "uint256"}, {"name": "strategyId", "type": "uint256"}], "name": "PositionOpened", "type": "event"},
+    {"inputs": [{"name": "user", "type": "address"}, {"name": "positionId", "type": "uint256"}, {"name": "realisedWei", "type": "uint256"}], "name": "PositionClosed", "type": "event"},
+    {"inputs": [{"name": "from", "type": "address"}, {"name": "amount", "type": "uint256"}], "name": "StakeDeposited", "type": "event"},
+    {"inputs": [], "name": "governor", "outputs": [{"name": "", "type": "address"}], "stateMutability": "view", "type": "function"},
+    {"inputs": [], "name": "treasury", "outputs": [{"name": "", "type": "address"}], "stateMutability": "view", "type": "function"},
+    {"inputs": [], "name": "vault", "outputs": [{"name": "", "type": "address"}], "stateMutability": "view", "type": "function"},
+    {"inputs": [], "name": "operator", "outputs": [{"name": "", "type": "address"}], "stateMutability": "view", "type": "function"},
+    {"inputs": [], "name": "router", "outputs": [{"name": "", "type": "address"}], "stateMutability": "view", "type": "function"},
+    {"inputs": [], "name": "clawPaused", "outputs": [{"name": "", "type": "bool"}], "stateMutability": "view", "type": "function"},
+    {"inputs": [], "name": "orderCounter", "outputs": [{"name": "", "type": "uint256"}], "stateMutability": "view", "type": "function"},
+    {"inputs": [], "name": "positionCounter", "outputs": [{"name": "", "type": "uint256"}], "stateMutability": "view", "type": "function"},
+    {"inputs": [], "name": "genesisBlock", "outputs": [{"name": "", "type": "uint256"}], "stateMutability": "view", "type": "function"},
+    {"inputs": [{"name": "orderId", "type": "uint256"}], "name": "getOrder", "outputs": [{"name": "tokenIn", "type": "address"}, {"name": "tokenOut", "type": "address"}, {"name": "amountIn", "type": "uint256"}, {"name": "amountOutMin", "type": "uint256"}, {"name": "deadline", "type": "uint256"}, {"name": "filled", "type": "bool"}, {"name": "cancelled", "type": "bool"}, {"name": "placedAtBlock", "type": "uint256"}], "stateMutability": "view", "type": "function"},
+    {"inputs": [{"name": "positionId", "type": "uint256"}], "name": "getPosition", "outputs": [{"name": "user", "type": "address"}, {"name": "strategyId", "type": "uint256"}, {"name": "sizeWei", "type": "uint256"}, {"name": "openedAtBlock", "type": "uint256"}, {"name": "entryPriceE8", "type": "uint256"}, {"name": "closed", "type": "bool"}, {"name": "realisedWei", "type": "uint256"}], "stateMutability": "view", "type": "function"},
+    {"inputs": [{"name": "strategyId", "type": "uint256"}], "name": "getStrategy", "outputs": [{"name": "allocCapWei", "type": "uint256"}, {"name": "allocUsedWei", "type": "uint256"}, {"name": "tickEpoch", "type": "uint256"}, {"name": "lastTickBlock", "type": "uint256"}, {"name": "sealed", "type": "bool"}, {"name": "active", "type": "bool"}, {"name": "confidenceTier", "type": "uint8"}], "stateMutability": "view", "type": "function"},
+    {"inputs": [], "name": "getOrderCount", "outputs": [{"name": "", "type": "uint256"}], "stateMutability": "view", "type": "function"},
+    {"inputs": [], "name": "getTotalStakedWei", "outputs": [{"name": "", "type": "uint256"}], "stateMutability": "view", "type": "function"},
+    {"inputs": [{"name": "user", "type": "address"}], "name": "getUserStakeWei", "outputs": [{"name": "", "type": "uint256"}], "stateMutability": "view", "type": "function"},
+    {"inputs": [{"name": "user", "type": "address"}], "name": "getUserPositionCount", "outputs": [{"name": "", "type": "uint256"}], "stateMutability": "view", "type": "function"},
+    {"inputs": [{"name": "tokenIn", "type": "address"}, {"name": "tokenOut", "type": "address"}, {"name": "amountIn", "type": "uint256"}, {"name": "amountOutMin", "type": "uint256"}, {"name": "deadline", "type": "uint256"}], "name": "placeOrder", "outputs": [{"name": "orderId", "type": "uint256"}], "stateMutability": "nonpayable", "type": "function"},
+    {"inputs": [{"name": "orderId", "type": "uint256"}], "name": "executeOrder", "outputs": [{"name": "amountOut", "type": "uint256"}], "stateMutability": "nonpayable", "type": "function"},
+    {"inputs": [{"name": "orderId", "type": "uint256"}], "name": "cancelOrder", "outputs": [], "stateMutability": "nonpayable", "type": "function"},
+    {"inputs": [], "name": "topTreasury", "outputs": [], "stateMutability": "payable", "type": "function"},
+    {"inputs": [], "name": "depositStake", "outputs": [], "stateMutability": "payable", "type": "function"},
+    {"inputs": [{"name": "amountWei", "type": "uint256"}], "name": "requestWithdrawStake", "outputs": [], "stateMutability": "nonpayable", "type": "function"},
+    {"inputs": [{"name": "strategyId", "type": "uint256"}, {"name": "sizeWei", "type": "uint256"}], "name": "openPosition", "outputs": [{"name": "positionId", "type": "uint256"}], "stateMutability": "nonpayable", "type": "function"},
+    {"inputs": [{"name": "positionId", "type": "uint256"}, {"name": "realisedWei", "type": "uint256"}], "name": "closePosition", "outputs": [], "stateMutability": "nonpayable", "type": "function"},
+    {"inputs": [], "name": "recordDeposit", "outputs": [{"name": "depositId", "type": "uint256"}], "stateMutability": "payable", "type": "function"},
